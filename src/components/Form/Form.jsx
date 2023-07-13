@@ -1,13 +1,12 @@
 import React, { useState } from "react"
 import { Title, FormStyled, Input, Button, Label, Box } from './FormStyled'
-import { nanoid } from 'nanoid';
 import { useSelector } from "react-redux/es/hooks/useSelector";
 import { useDispatch } from "react-redux";
-import { getContacts } from "redux/selectors";
-import { addContact } from "redux/contactListSlice";
+import { selectContacts } from "redux/selectors";
+import { addContact } from "redux/operations";
 
 export const Form = () => {
-  const contacts = useSelector(getContacts);
+  const contacts = useSelector(selectContacts);
   const dispatch = useDispatch()
 
   const [name, setName] = useState('');
@@ -19,19 +18,19 @@ export const Form = () => {
     return;
   }
   const contact = {
-    id: nanoid(),
     name: name.trim(),
-    number: number.trim(),
+    phone: number.trim(),
   };
   const existingContact = contacts.some(({name}) => contact.name.toLowerCase() === name.toLowerCase());
     if (existingContact) {
       alert('This contact already exists in the phonebook!');
       return;
     }
-  dispatch(addContact(contact))
+  dispatch(addContact({name: name.trim(), phone: number.trim()}))
   setName('');
   setNumber('')
 }
+
   const onChange = (e) => {
   switch (e.target.name) {
     case 'name':
