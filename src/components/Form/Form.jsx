@@ -1,19 +1,25 @@
-import React, { useState } from "react"
+import React from "react"
 import { Title, FormStyled, Input, Button, Label, Box } from './FormStyled'
 import { useSelector } from "react-redux/es/hooks/useSelector";
 import { useDispatch } from "react-redux";
 import { selectContacts } from "redux/selectors";
 import { addContact } from "redux/operations";
+import { Formik, ErrorMessage } from 'formik';
+import * as yup from 'yup';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+const scheme = yup.object().shape({
+name: yup.string().required("Please enter the contact's name"),
+number: yup.number().min(10).required("Please enter the phone number")
+})
+
 
 export const Form = () => {
   const contacts = useSelector(selectContacts);
   const dispatch = useDispatch()
 
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('')
-
-  const onSubmit = (e) =>{
-  e.preventDefault();
+  const onSubmit = ({name, number}, {resetForm}) =>{
   if (name.trim() === ''|| number.trim() === '') {
     return;
   }
@@ -23,56 +29,53 @@ export const Form = () => {
   };
   const existingContact = contacts.some(({name}) => contact.name.toLowerCase() === name.toLowerCase());
     if (existingContact) {
-      alert('This contact already exists in the phonebook!');
+      toast.info('This contact already exists in the phonebook!');
       return;
     }
   dispatch(addContact({name: name.trim(), phone: number.trim()}))
-  setName('');
-  setNumber('')
+  resetForm()
 }
 
-  const onChange = (e) => {
-  switch (e.target.name) {
-    case 'name':
-      setName(e.target.value);
-      break;
-    case 'number':
-      setNumber(e.target.value);
-      break;
-    default:
-      console.log(`${e.target.name} does not exist`);
-  }
+const notifyError = (msg) => {
+  toast.info(msg);
 };
 
-   return (
-    <Box>
-    <Title>Phonebook</Title>
-    <FormStyled onSubmit={onSubmit}>
-        <Label>
-        Name
-   <Input
-   onChange={onChange}
-    type="text"
-    name="name"
-    value={name}
-    pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-    title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-    required
-  />
-  </Label>
-  <Label>
-  Number
-  <Input
-    onChange={onChange}
-  type="tel"
-  name="number"
-  value={number}
-  pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-  title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-  required
-/>
-  </Label>
-  <Button>Add Contact</Button>
-   </FormStyled>
-    </Box>
-   )}
+    const initialValues = {
+      name:"",
+      number:""
+    }
+
+    return (
+      <Box>
+        <Title>Phonebook</Title>
+        <Formik initialValues={initialValues} validationSchema={scheme} onSubmit={onSubmit}>
+          <FormStyled>
+            <Label>
+              Name
+              <Input type="text" name="name" />
+              <ErrorMessage name="name" render={msg => notifyError(msg)}/>
+            </Label>
+            <Label>
+              Number
+              <Input type="tel" name="number" />
+              <ErrorMessage name="number" render={msg => notifyError(msg)}/>
+            </Label>
+            <Button type="submit">Add Contact</Button>
+          </FormStyled>
+        </Formik>
+        <ToastContainer
+          position="top-right"
+          autoClose={2500}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
+      </Box>
+    )}
+
+
